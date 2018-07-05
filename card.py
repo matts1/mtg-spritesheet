@@ -1,5 +1,5 @@
 import os
-import urllib
+import urllib.request
 
 import requests
 
@@ -35,9 +35,9 @@ class Card(object):
     def make_image_path(self, number=None):
         name = self.name.replace("/", "_")
         if number is None:
-            return os.path.join(IMAGE_CACHE_DIR, name + ".png")
+            return os.path.join(IMAGE_CACHE_DIR, name + ".jpg")
         else:
-            return os.path.join(IMAGE_CACHE_DIR, name + "_{}.png".format(number))
+            return os.path.join(IMAGE_CACHE_DIR, name + "_{}.jpg".format(number))
 
     def download(self):
         if not self.is_cached():
@@ -46,10 +46,10 @@ class Card(object):
             response.raise_for_status()
             json = response.json()
             if 'image_uris' in json:
-                image_uri = json['image_uris']['png']
+                image_uri = json['image_uris']['normal']
                 urllib.request.urlretrieve(image_uri, self.make_image_path())
             else:
-                image_uris = [face['image_uris']['png'] for face in json['card_faces']]
+                image_uris = [face['image_uris']['normal'] for face in json['card_faces']]
                 for i, uri in enumerate(image_uris):
                     urllib.request.urlretrieve(uri, self.make_image_path(i))
 

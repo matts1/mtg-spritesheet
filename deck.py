@@ -1,4 +1,6 @@
 import os
+import re
+import shutil
 
 from card import Card
 from constants import DECK_INPUT_DIR, SPRITE_SHEET_OUTPUT_DIR
@@ -17,9 +19,13 @@ class Deck(object):
     def save(self):
         primary_images = [card.image for card in self.cards]
         secondary_images = [image for c in self.cards for image in c.secondary_images]
-        SpriteSheet.create_sprite_sheets(self.name, primary_images)
+        filename = os.path.join(SPRITE_SHEET_OUTPUT_DIR, self.name)
+        if os.path.exists(filename):
+            shutil.rmtree(filename)
+        os.mkdir(filename)
+        SpriteSheet.create_sprite_sheets(filename, "deck", primary_images)
         if secondary_images:
-            SpriteSheet.create_sprite_sheets(self.name + "_secondary", secondary_images)
+            SpriteSheet.create_sprite_sheets(filename, "secondary", secondary_images)
 
     @property
     def cards(self):
@@ -36,17 +42,17 @@ class Deck(object):
                 self._cards = cards
         return self._cards
 
-
-    def make_output_path(self, number=None):
-        extension = ".png" if number is None else "_{}.png".format(number)
-        return os.path.join(SPRITE_SHEET_OUTPUT_DIR, self.name + extension)
+    @property
+    def output_dir(self):
+        return os.path.join(SPRITE_SHEET_OUTPUT_DIR, self.name)
 
     def is_outdated(self):
         input_last_modified = os.path.getmtime(self.filename)
         output_last_modified = 0
-        for output in (self.make_output_path(), self.make_output_path(0)):
-            if os.path.exists(output):
-                output_last_modified = os.path.getmtime(output)
+        # deck_name_regex = re.compile("^" + self.name + "_[0-9.]")
+        # output_files = [os.path.join(SPRITE_SHEET_OUTPUT_DIR, f) for f in self.__class__.output_files if deck_name_regex.match(f)]
+        if os.path.exists(self.output_dir) and os.path.isdir(self.output_dir):
+            output_last_modified = os.path.getmtime(self.output_dir)
         return output_last_modified < input_last_modified
 
     @classmethod
